@@ -32,9 +32,8 @@ banking network.
 src/            Main payment service (Spring Boot)
 fake-bank/      Simulated acquirer bank service
 frontend/       Angular operations console
-sql/            Database schema and seed scripts
+sql/            Database schema and seed data
 postman/        Postman collection for the API
-docs/           Architecture notes, data dictionary, diagrams
 ```
 
 ## Prerequisites
