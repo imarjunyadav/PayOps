@@ -1,0 +1,470 @@
+{
+  "info": {
+    "name": "PayOps",
+    "description": "Educational fake card payment processing and reconciliation simulator.\n\n**Quick start:**\n1. Run 'Login as Admin' — the JWT is auto-saved to {{token}}\n2. All other requests use {{token}} automatically\n\n**Test cards:**\n- `4111111111111111` — ₹50,000 balance → APPROVED\n- `4000000000000002` — ₹5 balance → DECLINED on amounts > ₹5\n- `4000000000000259` — ₹10,000 balance; 30-second delay → PENDING then resolved by recovery worker",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "base_url", "value": "http://localhost:8080", "type": "string" },
+    { "key": "fakebank_url", "value": "http://localhost:8081", "type": "string" },
+    { "key": "token", "value": "", "type": "string" },
+    { "key": "merchant_id", "value": "1", "type": "string" }
+  ],
+  "item": [
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Login as Admin",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var json = pm.response.json();",
+                  "if (json.token) { pm.collectionVariables.set('token', json.token); }",
+                  "pm.test('Login successful', () => pm.response.to.have.status(200));",
+                  "pm.test('Token returned', () => pm.expect(json.token).to.be.a('string'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"admin\",\n  \"password\": \"admin123\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/auth/login", "host": ["{{base_url}}"], "path": ["api", "auth", "login"] }
+          }
+        },
+        {
+          "name": "Login as Merchant",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var json = pm.response.json();",
+                  "if (json.token) { pm.collectionVariables.set('token', json.token); }",
+                  "if (json.merchantId) { pm.collectionVariables.set('merchant_id', String(json.merchantId)); }",
+                  "pm.test('Login successful', () => pm.response.to.have.status(200));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"merchant1\",\n  \"password\": \"merchant123\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/auth/login", "host": ["{{base_url}}"], "path": ["api", "auth", "login"] }
+          }
+        },
+        {
+          "name": "Get Current User (me)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{base_url}}/api/auth/me", "host": ["{{base_url}}"], "path": ["api", "auth", "me"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Payments",
+      "item": [
+        {
+          "name": "Process Payment — Approved",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "pm.collectionVariables.set('idempotency_key', 'test-' + Date.now());"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var json = pm.response.json();",
+                  "pm.test('Status 200 or 201', () => pm.expect(pm.response.code).to.be.oneOf([200,201]));",
+                  "pm.test('APPROVED or PENDING', () => pm.expect(json.status).to.be.oneOf(['APPROVED','PENDING']));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Idempotency-Key", "value": "{{idempotency_key}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cardNumber\": \"4111111111111111\",\n  \"amount\": 1000.00,\n  \"currency\": \"INR\",\n  \"merchantId\": {{merchant_id}},\n  \"switchId\": 1,\n  \"description\": \"Test payment — approved card\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/payments", "host": ["{{base_url}}"], "path": ["api", "payments"] }
+          }
+        },
+        {
+          "name": "Process Payment — Declined (low balance)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "pm.collectionVariables.set('idempotency_key', 'test-declined-' + Date.now());"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var json = pm.response.json();",
+                  "pm.test('DECLINED', () => pm.expect(json.status).to.eql('DECLINED'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Idempotency-Key", "value": "{{idempotency_key}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cardNumber\": \"4000000000000002\",\n  \"amount\": 500.00,\n  \"currency\": \"INR\",\n  \"merchantId\": {{merchant_id}},\n  \"switchId\": 1,\n  \"description\": \"Test payment — insufficient balance\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/payments", "host": ["{{base_url}}"], "path": ["api", "payments"] }
+          }
+        },
+        {
+          "name": "Process Payment — Pending (delayed card, ends in 9)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "pm.collectionVariables.set('idempotency_key', 'test-pending-' + Date.now());"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var json = pm.response.json();",
+                  "pm.test('PENDING (bank timeout)', () => pm.expect(json.status).to.eql('PENDING'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Idempotency-Key", "value": "{{idempotency_key}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cardNumber\": \"4000000000000259\",\n  \"amount\": 500.00,\n  \"currency\": \"INR\",\n  \"merchantId\": {{merchant_id}},\n  \"switchId\": 1,\n  \"description\": \"Test payment — delayed bank response\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/payments", "host": ["{{base_url}}"], "path": ["api", "payments"] }
+          }
+        },
+        {
+          "name": "Process Payment — Invalid Card (Luhn fail)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Validation error 400', () => pm.response.to.have.status(400));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Idempotency-Key", "value": "luhn-fail-001" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cardNumber\": \"4111111111111112\",\n  \"amount\": 100.00,\n  \"currency\": \"INR\",\n  \"merchantId\": {{merchant_id}},\n  \"switchId\": 1,\n  \"description\": \"Invalid Luhn checksum\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/payments", "host": ["{{base_url}}"], "path": ["api", "payments"] }
+          }
+        },
+        {
+          "name": "List Payments",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{base_url}}/api/payments", "host": ["{{base_url}}"], "path": ["api", "payments"] }
+          }
+        },
+        {
+          "name": "Get Payment by ID",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{base_url}}/api/payments/1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "payments", "1"]
+            }
+          }
+        },
+        {
+          "name": "Get Payment by Reference",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{base_url}}/api/payments/by-reference/PAY-001",
+              "host": ["{{base_url}}"],
+              "path": ["api", "payments", "by-reference", "PAY-001"]
+            }
+          }
+        },
+        {
+          "name": "Get Payment Events",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{base_url}}/api/payments/1/events",
+              "host": ["{{base_url}}"],
+              "path": ["api", "payments", "1", "events"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Idempotency",
+      "item": [
+        {
+          "name": "Retry Same Idempotency Key (no duplicate charge)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Returns same payment (idempotent)', () => pm.response.to.have.status(200));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Idempotency-Key", "value": "fixed-idempotency-key-replay-test" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cardNumber\": \"4111111111111111\",\n  \"amount\": 100.00,\n  \"currency\": \"INR\",\n  \"merchantId\": {{merchant_id}},\n  \"switchId\": 1,\n  \"description\": \"Idempotency replay test\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/payments", "host": ["{{base_url}}"], "path": ["api", "payments"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Ledger",
+      "item": [
+        {
+          "name": "List Journal Entries",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{base_url}}/api/journal-entries", "host": ["{{base_url}}"], "path": ["api", "journal-entries"] }
+          }
+        },
+        {
+          "name": "List Postings",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{base_url}}/api/postings", "host": ["{{base_url}}"], "path": ["api", "postings"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Settlement & Reconciliation",
+      "item": [
+        {
+          "name": "Upload Settlement CSV",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "description": "Bank settlement CSV. Expected columns: payment_reference, bank_reference, amount, currency, status"
+                },
+                { "key": "switchId", "value": "1", "type": "text" },
+                { "key": "settlementDate", "value": "2025-01-15", "type": "text" }
+              ]
+            },
+            "url": { "raw": "{{base_url}}/api/settlement-files", "host": ["{{base_url}}"], "path": ["api", "settlement-files"] }
+          }
+        },
+        {
+          "name": "List Settlement Files",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{base_url}}/api/settlement-files", "host": ["{{base_url}}"], "path": ["api", "settlement-files"] }
+          }
+        },
+        {
+          "name": "Trigger Reconciliation Run",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var json = pm.response.json();",
+                  "if (json.id) { pm.collectionVariables.set('run_id', String(json.id)); }",
+                  "pm.test('Run created', () => pm.expect(pm.response.code).to.be.oneOf([200,201]));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{base_url}}/api/reconciliation-runs/trigger?settlementFileId=1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "reconciliation-runs", "trigger"],
+              "query": [{ "key": "settlementFileId", "value": "1" }]
+            }
+          }
+        },
+        {
+          "name": "List Reconciliation Runs",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{base_url}}/api/reconciliation-runs", "host": ["{{base_url}}"], "path": ["api", "reconciliation-runs"] }
+          }
+        },
+        {
+          "name": "Get Reconciliation Results",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{base_url}}/api/reconciliation-runs/{{run_id}}/results",
+              "host": ["{{base_url}}"],
+              "path": ["api", "reconciliation-runs", "{{run_id}}", "results"]
+            }
+          }
+        },
+        {
+          "name": "Export Reconciliation CSV",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{base_url}}/api/reconciliation-runs/{{run_id}}/export",
+              "host": ["{{base_url}}"],
+              "path": ["api", "reconciliation-runs", "{{run_id}}", "export"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admin — Master Data",
+      "item": [
+        {
+          "name": "List Merchants",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{base_url}}/api/merchants", "host": ["{{base_url}}"], "path": ["api", "merchants"] }
+          }
+        },
+        {
+          "name": "List Switches",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{base_url}}/api/switches", "host": ["{{base_url}}"], "path": ["api", "switches"] }
+          }
+        },
+        {
+          "name": "List Accounts",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{base_url}}/api/accounts", "host": ["{{base_url}}"], "path": ["api", "accounts"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Fake Bank",
+      "item": [
+        {
+          "name": "Check Bank Transaction by Request ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{fakebank_url}}/api/bank/transactions/by-request/SOME-REQUEST-ID",
+              "host": ["{{fakebank_url}}"],
+              "path": ["api", "bank", "transactions", "by-request", "SOME-REQUEST-ID"]
+            }
+          }
+        },
+        {
+          "name": "Check Bank Transaction by Payment Reference",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{fakebank_url}}/api/bank/transactions/by-payment-reference/PAY-001",
+              "host": ["{{fakebank_url}}"],
+              "path": ["api", "bank", "transactions", "by-payment-reference", "PAY-001"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

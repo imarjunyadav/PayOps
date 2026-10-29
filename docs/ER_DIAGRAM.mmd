@@ -1,0 +1,102 @@
+%% Paste into https://mermaid.live or a Markdown viewer. (PNG/SVG not rendered: no browser available here.)
+erDiagram
+    ROLE ||--o{ USER_ROLE : "granted via"
+    APP_USER ||--o{ USER_ROLE : "has"
+    SWITCH_DATABASE ||--o{ MERCHANT : "default route for (0..1)"
+    SWITCH_DATABASE ||--o{ PAYMENT : "routes"
+    SWITCH_DATABASE ||--o{ SETTLEMENT_FILE : "sends"
+    MERCHANT ||--o{ PAYMENT : "receives"
+    MERCHANT |o--o{ ACCOUNT : "owns (optional)"
+    PAYMENT ||--o{ PAYMENT_EVENT : "audit trail"
+    PAYMENT |o--o{ JOURNAL_ENTRY : "produces"
+    PAYMENT |o--o{ SETTLEMENT_RECORD : "matched to (optional)"
+    PAYMENT |o--o{ RECONCILIATION_RESULT : "checked in"
+    JOURNAL_ENTRY ||--|{ POSTING : "contains (>=2)"
+    ACCOUNT ||--o{ POSTING : "debited/credited"
+    SETTLEMENT_FILE ||--o{ SETTLEMENT_RECORD : "contains"
+    SETTLEMENT_RECORD |o--o{ JOURNAL_ENTRY : "settlement posting"
+    SETTLEMENT_FILE ||--o{ RECONCILIATION_RUN : "reconciled by"
+    RECONCILIATION_RUN ||--o{ RECONCILIATION_RESULT : "writes"
+    SETTLEMENT_RECORD |o--o{ RECONCILIATION_RESULT : "checked in"
+    USER_ROLE {
+        bigint user_id PK,FK
+        bigint role_id PK,FK
+    }
+    ROLE {
+        bigint id PK
+    }
+    APP_USER {
+        bigint id PK
+        varchar username UK
+        varchar email UK
+        varchar status
+    }
+    SWITCH_DATABASE {
+        bigint id PK
+        varchar code UK
+        varchar status
+    }
+    MERCHANT {
+        bigint id PK
+        varchar code UK
+        varchar status
+        bigint default_switch_id FK
+    }
+    ACCOUNT {
+        bigint id PK
+        varchar code UK
+        bigint merchant_id FK
+    }
+    PAYMENT {
+        bigint id PK
+        varchar reference UK
+        bigint merchant_id FK
+        bigint switch_database_id FK
+        numeric amount
+        varchar status
+    }
+    PAYMENT_EVENT {
+        bigint id PK
+        bigint payment_id FK
+        varchar event_type
+        numeric amount
+    }
+    SETTLEMENT_FILE {
+        bigint id PK
+        varchar file_name UK
+        bigint switch_database_id FK
+        varchar status
+    }
+    SETTLEMENT_RECORD {
+        bigint id PK
+        bigint settlement_file_id FK
+        varchar payment_reference
+        bigint payment_id FK
+        numeric amount
+    }
+    JOURNAL_ENTRY {
+        bigint id PK
+        varchar entry_number UK
+        bigint payment_id FK
+        bigint settlement_record_id FK
+    }
+    POSTING {
+        bigint id PK
+        bigint journal_entry_id FK
+        bigint account_id FK
+        varchar direction
+        numeric amount
+    }
+    RECONCILIATION_RUN {
+        bigint id PK
+        varchar run_number UK
+        bigint settlement_file_id FK
+        varchar status
+    }
+    RECONCILIATION_RESULT {
+        bigint id PK
+        bigint reconciliation_run_id FK
+        bigint settlement_record_id FK
+        bigint payment_id FK
+        varchar result_type
+    }

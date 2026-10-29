@@ -1,0 +1,13 @@
+%% Simplified overview for the guide
+flowchart LR
+    U[User + Role] -->|operates| P
+    M[Merchant] -->|customer pays| P[Payment]
+    S[SwitchDatabase\nrouting to bank] --- P
+    P -->|every state change| PE[PaymentEvent\naudit trail]
+    P -->|capture / refund| J[JournalEntry]
+    J --> PO[Posting\ndebit/credit] --> A[Account\nledger]
+    B[Bank sends] --> SF[SettlementFile] --> SR[SettlementRecord]
+    SR -->|settlement posting| J
+    SR --> RR
+    P --> RR[ReconciliationRun]
+    RR --> RS[ReconciliationResult\nMATCHED / MISMATCH / MISSING / DUPLICATE]
