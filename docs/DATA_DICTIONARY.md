@@ -16,7 +16,7 @@ Generated from the same spec as the Java entities and schema.sql, so all three a
 | created_at | LocalDateTime | TIMESTAMP | No | DEFAULT now | Row creation time |
 | created_by | String | VARCHAR(50) | Yes | | Username who created it |
 
-**Enum RoleName:** ADMIN, OPS_ENGINEER, FINANCE, SUPPORT
+**Enum RoleName:** ADMIN, OPS_ENGINEER, FINANCE, SUPPORT, MERCHANT
 
 
 ## User  (table `app_user`)
@@ -137,7 +137,7 @@ Join table `user_role(user_id, role_id)`: composite PK, both FK ON DELETE CASCAD
 
 **Enum PaymentMethod:** CARD, UPI, NETBANKING, WALLET
 
-**Enum PaymentStatus:** INITIATED, AUTHORIZED, CAPTURED, FAILED, REFUNDED, SETTLED
+**Enum PaymentStatus:** INITIATED, PENDING, APPROVED, DECLINED, AUTHORIZED, CAPTURED, FAILED, REFUNDED, SETTLED
 
 
 ## PaymentEvent  (table `payment_event`)
@@ -156,7 +156,7 @@ Join table `user_role(user_id, role_id)`: composite PK, both FK ON DELETE CASCAD
 | created_at | LocalDateTime | TIMESTAMP | No | DEFAULT now | Row creation time |
 | created_by | String | VARCHAR(50) | Yes | | Username who created it |
 
-**Enum PaymentStatus:** INITIATED, AUTHORIZED, CAPTURED, FAILED, REFUNDED, SETTLED
+**Enum PaymentStatus:** INITIATED, PENDING, APPROVED, DECLINED, AUTHORIZED, CAPTURED, FAILED, REFUNDED, SETTLED
 
 
 ## SettlementFile  (table `settlement_file`)
