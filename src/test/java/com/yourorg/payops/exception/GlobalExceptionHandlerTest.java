@@ -1,6 +1,5 @@
 package com.yourorg.payops.exception;
 
-import com.yourorg.payops.model.ApiError;
 import org.junit.jupiter.api.Test;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
@@ -27,7 +26,7 @@ class GlobalExceptionHandlerTest {
     void mapsBusinessRuleToUnprocessableEntity() {
         var response = handler.rule(new BusinessRuleException("Journal is not balanced"));
 
-        assertEquals(HttpStatus.UNPROCESSABLE_ENTITY, response.getStatusCode());
+        assertEquals(HttpStatus.UNPROCESSABLE_CONTENT, response.getStatusCode());
         assertEquals(422, response.getBody().getStatus());
         assertEquals("Journal is not balanced", response.getBody().getMessage());
     }

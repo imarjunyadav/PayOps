@@ -116,6 +116,7 @@ class SettlementFileControllerTest {
     }
 
     @Test
+    @SuppressWarnings({"unchecked", "rawtypes"})
     void createsRecordsAndUpdatesFileTotals() {
         Payment payment = new Payment();
         payment.setId(5L);

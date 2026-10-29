@@ -16,7 +16,6 @@ import com.yourorg.payops.repository.PaymentRepository;
 import com.yourorg.payops.repository.SwitchDatabaseRepository;
 import jakarta.validation.Validation;
 import java.math.BigDecimal;
-import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;

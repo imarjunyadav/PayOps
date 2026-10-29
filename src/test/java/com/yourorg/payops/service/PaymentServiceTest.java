@@ -5,7 +5,6 @@ import com.yourorg.payops.client.bank.BankAuthResponse;
 import com.yourorg.payops.client.bank.FakeBankClient;
 import com.yourorg.payops.entity.Merchant;
 import com.yourorg.payops.entity.Payment;
-import com.yourorg.payops.entity.PaymentEvent;
 import com.yourorg.payops.entity.SwitchDatabase;
 import com.yourorg.payops.exception.BusinessRuleException;
 import com.yourorg.payops.exception.ConflictException;
@@ -26,7 +25,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
-import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;

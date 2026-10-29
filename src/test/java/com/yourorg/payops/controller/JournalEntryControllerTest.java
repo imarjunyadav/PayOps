@@ -125,6 +125,7 @@ class JournalEntryControllerTest {
     }
 
     @Test
+    @SuppressWarnings({"unchecked", "rawtypes"})
     void savesBalancedDebitAndCreditLinesAsOneBatch() {
         when(postings.saveAll(any(Iterable.class))).thenAnswer(call -> call.getArgument(0));
         List<Posting> batch = balancedBatch();

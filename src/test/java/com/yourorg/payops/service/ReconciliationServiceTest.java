@@ -16,8 +16,6 @@ import org.springframework.mock.web.MockMultipartFile;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -153,7 +151,7 @@ class ReconciliationServiceTest {
         });
         when(settlementRecordRepo.saveAll(any())).thenAnswer(inv -> inv.getArgument(0));
 
-        SettlementFile result = service.uploadAndProcessCsv(multipart, 1L, null);
+        service.uploadAndProcessCsv(multipart, 1L, null);
 
         @SuppressWarnings("unchecked")
         ArgumentCaptor<List<SettlementRecord>> captor = ArgumentCaptor.forClass(List.class);
@@ -179,7 +177,7 @@ class ReconciliationServiceTest {
         });
         when(settlementRecordRepo.saveAll(any())).thenAnswer(inv -> inv.getArgument(0));
 
-        SettlementFile result = service.uploadAndProcessCsv(multipart, 1L, null);
+        service.uploadAndProcessCsv(multipart, 1L, null);
 
         @SuppressWarnings("unchecked")
         ArgumentCaptor<List<SettlementRecord>> captor = ArgumentCaptor.forClass(List.class);
@@ -542,7 +540,7 @@ class ReconciliationServiceTest {
 
         stubRunScenario(List.of(bankRecord), List.of());
 
-        ReconciliationRun run = service.runReconciliation(10L);
+        service.runReconciliation(10L);
 
         @SuppressWarnings("unchecked")
         ArgumentCaptor<List<ReconciliationResult>> captor = ArgumentCaptor.forClass(List.class);
@@ -562,7 +560,7 @@ class ReconciliationServiceTest {
 
         stubRunScenario(List.of(bankRecord), List.of(pay1, pay2));
 
-        ReconciliationRun run = service.runReconciliation(10L);
+        service.runReconciliation(10L);
 
         @SuppressWarnings("unchecked")
         ArgumentCaptor<List<ReconciliationResult>> captor = ArgumentCaptor.forClass(List.class);
@@ -600,7 +598,7 @@ class ReconciliationServiceTest {
 
         stubRunScenario(List.of(bankRecord), List.of(p1, p2, p3, p4, p5));
 
-        ReconciliationRun run = service.runReconciliation(10L);
+        service.runReconciliation(10L);
 
         @SuppressWarnings("unchecked")
         ArgumentCaptor<List<ReconciliationResult>> captor = ArgumentCaptor.forClass(List.class);
@@ -663,7 +661,7 @@ class ReconciliationServiceTest {
 
         stubRunScenario(List.of(bankRecord), List.of(payment));
 
-        ReconciliationRun run = service.runReconciliation(10L);
+        service.runReconciliation(10L);
 
         @SuppressWarnings("unchecked")
         ArgumentCaptor<List<ReconciliationResult>> captor = ArgumentCaptor.forClass(List.class);

@@ -115,6 +115,7 @@ class ReconciliationRunControllerTest {
     }
 
     @Test
+    @SuppressWarnings({"unchecked", "rawtypes"})
     void createsResultAndResolvesReferencesFromRepositories() {
         Payment supplied = payment(5L, "50.00");
         Payment actualPayment = payment(5L, "50.0000");
@@ -143,6 +144,7 @@ class ReconciliationRunControllerTest {
     }
 
     @Test
+    @SuppressWarnings({"unchecked", "rawtypes"})
     void classifiesDifferentPaymentAndSettlementAmountsAsMismatch() {
         Payment payment = payment(5L, "52.00");
         SettlementRecord record = settlementRecord(8L, "50.00", file);
