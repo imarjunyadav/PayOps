@@ -444,7 +444,7 @@ public class ReconciliationService {
      * No sensitive card data is included.
      */
     public byte[] exportResultsCsv(Long runId) {
-        ReconciliationRun run = reconciliationRunRepo.findById(runId)
+        reconciliationRunRepo.findById(runId)
                 .orElseThrow(() -> new ResourceNotFoundException("ReconciliationRun", runId));
         List<ReconciliationResult> results = reconciliationResultRepo.findByReconciliationRunId(runId);
 

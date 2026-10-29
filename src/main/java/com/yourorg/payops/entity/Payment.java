@@ -6,10 +6,6 @@ import com.yourorg.payops.model.*;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
 import java.math.BigDecimal;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.util.HashSet;
-import java.util.Set;
 
 /** One customer payment made to a merchant and routed through a switch. Central table. */
 @Entity

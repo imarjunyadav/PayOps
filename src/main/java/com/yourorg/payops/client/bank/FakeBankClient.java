@@ -53,7 +53,7 @@ public class FakeBankClient {
             throw new BankTimeoutException("Bank authorization timed out: " + e.getMessage(), e);
         } catch (HttpStatusCodeException e) {
             log.info("Fake-bank returned HTTP status {} for requestId={}", e.getStatusCode(), request.getRequestId());
-            if (e.getStatusCode() == HttpStatus.BAD_REQUEST || e.getStatusCode() == HttpStatus.UNPROCESSABLE_ENTITY) {
+            if (e.getStatusCode() == HttpStatus.BAD_REQUEST || e.getStatusCode() == HttpStatus.UNPROCESSABLE_CONTENT) {
                 try {
                     BankAuthResponse errBody = e.getResponseBodyAs(BankAuthResponse.class);
                     if (errBody != null) {

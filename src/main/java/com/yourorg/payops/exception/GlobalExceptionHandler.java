@@ -17,7 +17,7 @@ public class GlobalExceptionHandler {
     }
     @ExceptionHandler(BusinessRuleException.class)
     public ResponseEntity<ApiError> rule(BusinessRuleException e) {
-        return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).body(new ApiError(422, e.getMessage()));
+        return ResponseEntity.status(HttpStatus.UNPROCESSABLE_CONTENT).body(new ApiError(422, e.getMessage()));
     }
     @ExceptionHandler(ConflictException.class)
     public ResponseEntity<ApiError> conflict(ConflictException e) {
