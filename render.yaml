@@ -37,7 +37,6 @@ services:
   - type: web
     name: payops-frontend
     runtime: static
-    plan: free
     buildCommand: cd frontend && npm install && npx ng build --configuration production
     staticPublishPath: ./frontend/dist/epoc-frontend/browser
     routes:
