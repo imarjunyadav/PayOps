@@ -6,6 +6,7 @@ services:
     plan: free
     dockerfilePath: ./fake-bank/Dockerfile
     dockerContext: ./fake-bank
+    healthCheckPath: /actuator/health
     envVars:
       - key: FAKEBANK_DB_URL
         sync: false
@@ -21,6 +22,7 @@ services:
     plan: free
     dockerfilePath: ./Dockerfile
     dockerContext: .
+    healthCheckPath: /actuator/health
     envVars:
       - key: PAYOPS_DB_URL
         sync: false
