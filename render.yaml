@@ -1,0 +1,49 @@
+services:
+  # ── Fake Bank (must start first — main app calls it) ──
+  - type: web
+    name: payops-fake-bank
+    runtime: docker
+    plan: free
+    dockerfilePath: ./fake-bank/Dockerfile
+    dockerContext: ./fake-bank
+    envVars:
+      - key: FAKEBANK_DB_URL
+        sync: false
+      - key: PAYOPS_DB_USERNAME
+        sync: false
+      - key: PAYOPS_DB_PASSWORD
+        sync: false
+
+  # ── Main Spring Boot API ──
+  - type: web
+    name: payops-api
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    envVars:
+      - key: PAYOPS_DB_URL
+        sync: false
+      - key: PAYOPS_DB_USERNAME
+        sync: false
+      - key: PAYOPS_DB_PASSWORD
+        sync: false
+      - key: PAYOPS_JWT_SECRET
+        sync: false
+      - key: FAKEBANK_URL
+        sync: false
+
+  # ── Angular Frontend (static site) ──
+  - type: web
+    name: payops-frontend
+    runtime: static
+    plan: free
+    buildCommand: cd frontend && npm install && npx ng build --configuration production
+    staticPublishPath: ./frontend/dist/epoc-frontend/browser
+    routes:
+      - type: rewrite
+        source: /api/*
+        destination: https://payops-api.onrender.com/api/*
+    envVars:
+      - key: NODE_VERSION
+        value: 20
